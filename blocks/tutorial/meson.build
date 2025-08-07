@@ -17,3 +17,4 @@ gr4_tutorial_blocks_dep = declare_dependency(
 
 # Add subdirectory for tests
 subdir('test')
+subdir('examples')
