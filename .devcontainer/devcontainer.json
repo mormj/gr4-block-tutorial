@@ -1,8 +1,6 @@
 {
-  "name": "GR4 OOT Dev Container",
-  "build": {
-    "dockerfile": "../docker/Dockerfile"
-  },
+  "name": "GR4 Block Tutorial Dev Container",
+  "image": "ghcr.io/mormj/gr4-oot-env:latest",
   "runArgs": [
     "--network=host"
   ],
