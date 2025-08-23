@@ -1,0 +1,426 @@
+options:
+  parameters:
+    author: josh
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: untitled
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Not titled yet
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: freq
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: ''
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '0'
+    step: '10'
+    stop: samp_rate/10
+    value: '1000'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1456, 52.0]
+    rotation: 0
+    state: enabled
+- name: gain
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: ''
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '0'
+    step: '0.01'
+    stop: '1'
+    value: '0.5'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1696, 52.0]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '100000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 12]
+    rotation: 0
+    state: enabled
+- name: analog_sig_source_x_0
+  id: analog_sig_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: gain
+    comment: ''
+    freq: freq
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    phase: '0'
+    samp_rate: samp_rate
+    showports: 'False'
+    type: complex
+    waveform: analog.GR_COS_WAVE
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [312, 288.0]
+    rotation: 0
+    state: disabled
+- name: analog_sig_source_x_0_0
+  id: analog_sig_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: gain
+    comment: ''
+    freq: freq
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    phase: '0'
+    samp_rate: samp_rate
+    showports: 'False'
+    type: complex
+    waveform: analog.GR_COS_WAVE
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [592, 680.0]
+    rotation: 0
+    state: enabled
+- name: blocks_throttle2_0
+  id: blocks_throttle2
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    limit: auto
+    maximum: '0.1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [600, 184.0]
+    rotation: 0
+    state: disabled
+- name: blocks_throttle2_0_0
+  id: blocks_throttle2
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    limit: auto
+    maximum: '0.1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [888, 568.0]
+    rotation: 0
+    state: enabled
+- name: epy_block_0
+  id: epy_block
+  parameters:
+    _source_code: "\"\"\"\nEmbedded Python Blocks:\n\nEach time this file is saved,\
+      \ GRC will instantiate the first class it finds\nto get ports and parameters\
+      \ of your block. The arguments to __init__  will\nbe the parameters. All of\
+      \ them are required to have default values!\n\"\"\"\n\nimport numpy as np\n\
+      from gnuradio import gr\nimport pmt\n\nclass blk(gr.sync_block):  # other base\
+      \ classes are basic_block, decim_block, interp_block\n    \"\"\"Embedded Python\
+      \ Block example - a simple multiply const\"\"\"\n\n    def __init__(self, packet_size_samples=1024):\
+      \  # only default arguments here\n        \"\"\"arguments to this function show\
+      \ up as parameters in GRC\"\"\"\n        gr.sync_block.__init__(\n         \
+      \   self,\n            name='Stream to Uniform Vector PMT',   # will show up\
+      \ in GRC\n            in_sig=[np.complex64],\n            out_sig=[]\n     \
+      \   )\n        # if an attribute with the same name as a parameter is found,\n\
+      \        # a callback is registered (properties work, too).\n        self.packet_size_samples\
+      \ = packet_size_samples\n        self.message_port_register_out(pmt.intern(\"\
+      out\"))\n        self._buffer = np.array([], dtype=np.complex64)\n\n    def\
+      \ work(self, input_items, output_items):\n        in0 = input_items[0]\n\n \
+      \       if len(in0) == 0:\n            return 0\n\n        # Buffer new input\n\
+      \        self._buffer = np.concatenate([self._buffer, in0])\n\n        packets_emitted\
+      \ = 0\n        while len(self._buffer) >= self.packet_size_samples:\n      \
+      \      # Slice out one packet\n            packet = self._buffer[:self.packet_size_samples]\n\
+      \            # Remove from buffer\n            self._buffer = self._buffer[self.packet_size_samples:]\n\
+      \            # Convert to PMT uniform vector\n            pkt_pmt = pmt.init_c32vector(self.packet_size_samples,\
+      \ packet.tolist())\n            self.message_port_pub(pmt.intern(\"out\"), pkt_pmt)\n\
+      \            packets_emitted += 1\n\n        # Tell scheduler we consumed everything\n\
+      \        return len(input_items[0])"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packet_size_samples: '1024'
+  states:
+    _io_cache: ('Stream to Uniform Vector PMT', 'blk', [('packet_size_samples', '1024')],
+      [('0', 'complex', 1)], [('out', 'message', 1)], 'Embedded Python Block example
+      - a simple multiply const', ['packet_size_samples'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [720, 356.0]
+    rotation: 0
+    state: disabled
+- name: epy_block_1
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\n\nclass\
+      \ pmt_to_stream(gr.basic_block):\n    \"\"\"\n    Receives PMT uniform vectors\
+      \ (c32vector) on a message port, and outputs their\n    samples as a stream\
+      \ of complex64.\n    \"\"\"\n    def __init__(self):\n        gr.basic_block.__init__(\n\
+      \            self,\n            name=\"Uniform Vector PMT to Stream\",\n   \
+      \         in_sig=[],\n            out_sig=[np.complex64]\n        )\n      \
+      \  self.message_port_register_in(pmt.intern(\"in\"))\n        self.set_msg_handler(pmt.intern(\"\
+      in\"), self.handle_msg)\n        self._buffer = np.array([], dtype=np.complex64)\n\
+      \n    def handle_msg(self, msg):\n        # Expecting a uniform c32vector\n\
+      \        if pmt.is_c32vector(msg):\n            nitems = pmt.length(msg)\n \
+      \           data = np.array([pmt.c32vector_ref(msg, i) for i in range(nitems)],\
+      \ dtype=np.complex64)\n            # print(data[0])\n            # Buffer data\
+      \ for output\n            self._buffer = np.concatenate([self._buffer, data])\n\
+      \n    def general_work(self, input_items, output_items):\n        out = output_items[0]\n\
+      \        noutput_items = len(out)\n\n        \n\n        to_write = min(len(self._buffer),\
+      \ noutput_items)\n\n        # print (f'{len(self._buffer)}, {noutput_items},\
+      \ {to_write}')\n        if to_write > 0:\n            # print(to_write)\n  \
+      \          out[:to_write] = self._buffer[:to_write]\n            self._buffer\
+      \ = self._buffer[to_write:]\n            # print (f'{len(self._buffer)}')\n\
+      \            # self.produce(0, to_write)\n            return to_write\n    \
+      \    else:\n            # Nothing to output, tell scheduler we want more calls\n\
+      \            return 0\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('Uniform Vector PMT to Stream', 'pmt_to_stream', [], [('in', 'message',
+      1)], [('0', 'complex', 1)], '\n    Receives PMT uniform vectors (c32vector)
+      on a message port, and outputs their\n    samples as a stream of complex64.\n    ',
+      [])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1632, 372.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_time_sink_x_0
+  id: qtgui_time_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: blue
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: ''
+    ctrlpanel: 'False'
+    entags: 'True'
+    grid: 'False'
+    gui_hint: ''
+    label1: Signal 1
+    label10: Signal 10
+    label2: Signal 2
+    label3: Signal 3
+    label4: Signal 4
+    label5: Signal 5
+    label6: Signal 6
+    label7: Signal 7
+    label8: Signal 8
+    label9: Signal 9
+    legend: 'True'
+    marker1: '-1'
+    marker10: '-1'
+    marker2: '-1'
+    marker3: '-1'
+    marker4: '-1'
+    marker5: '-1'
+    marker6: '-1'
+    marker7: '-1'
+    marker8: '-1'
+    marker9: '-1'
+    name: '""'
+    nconnections: '1'
+    size: '10240'
+    srate: samp_rate
+    stemplot: 'False'
+    style1: '1'
+    style10: '1'
+    style2: '1'
+    style3: '1'
+    style4: '1'
+    style5: '1'
+    style6: '1'
+    style7: '1'
+    style8: '1'
+    style9: '1'
+    tr_chan: '0'
+    tr_delay: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    ylabel: Amplitude
+    ymax: '1'
+    ymin: '-1'
+    yunit: '""'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1984, 384.0]
+    rotation: 0
+    state: enabled
+- name: zeromq_pull_msg_source_0
+  id: zeromq_pull_msg_source
+  parameters:
+    address: tcp://localhost:5556
+    affinity: ''
+    alias: ''
+    bind: 'False'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    timeout: '100'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1320, 352.0]
+    rotation: 0
+    state: enabled
+- name: zeromq_push_msg_sink_0
+  id: zeromq_push_msg_sink
+  parameters:
+    address: tcp://localhost:5555
+    affinity: ''
+    alias: ''
+    bind: 'True'
+    comment: ''
+    timeout: '100'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1064, 344.0]
+    rotation: 0
+    state: disabled
+- name: zeromq_push_sink_0
+  id: zeromq_push_sink
+  parameters:
+    address: tcp://localhost:5555
+    affinity: ''
+    alias: ''
+    bind: 'True'
+    comment: ''
+    hwm: '-1'
+    pass_tags: 'False'
+    timeout: '100'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1064, 700.0]
+    rotation: 0
+    state: enabled
+
+connections:
+- [analog_sig_source_x_0, '0', blocks_throttle2_0, '0']
+- [analog_sig_source_x_0, '0', epy_block_0, '0']
+- [analog_sig_source_x_0_0, '0', blocks_throttle2_0_0, '0']
+- [analog_sig_source_x_0_0, '0', zeromq_push_sink_0, '0']
+- [epy_block_0, out, zeromq_push_msg_sink_0, in]
+- [epy_block_1, '0', qtgui_time_sink_x_0, '0']
+- [zeromq_pull_msg_source_0, out, epy_block_1, in]
+
+metadata:
+  file_format: 1
+  grc_version: v3.10.11.0-1-gee27d6f3
