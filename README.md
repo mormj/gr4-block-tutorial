@@ -255,4 +255,57 @@ To use (what will become) std::simd approach to vectorizing the block, we just h
 
 ### Adding a parameter
 
+A parameter in a GR4 block is just a member variable that gets registered through the reflection management macro.
+
+Let's keep working on our `Square` block, and add a parameter that is an additive offset to go with the square.
+
+```c++
+    T offset = 0;
+
+    GR_MAKE_REFLECTABLE(Square, in, out, offset);
+```
+
+We just declared a member variable and told the framework to expose this as a reflected parameter.  This means
+
+1) At flowgraph initialization, we can specify this parameter with an initialization value
+2) During flowgraph runtime, we can change this parameter by getting a `PMT` to the block (either over a control port, or via tags, or a block method)
+
+Nothing more we have to do to enable this behavior.  The only exception to this is if the parameter drives some change in the underlying behavior of a private variable.
+
+
 ### Annotations
+
+We can indicate a number of things associated with a parameter that get compiled in by wrapping the type of the parameter in the `Annotated` template.
+
+```c++
+Annotated<T, "offset", Doc<"additive offset">, Visible, Unit<"dB">>        offset = 0;
+```
+
+In this case we are using type T (still), naming the parameter `"offset"`, and documenting what it does.  Also we denote that it is `Visible` to the UI (flag that can be used by a UI application), and giving it a physically meaningful unit.  In this case we put dB - which is not true at the moment, but let's make it that way.
+
+
+### Parameter Changes
+
+If a parameter change impacts other member variables, we need to catch changes.  In GR4 blocks there is no custom constructor, so parameter changes are all handled through a common handler
+
+Since we decided to define our offset as a dB value (for arbitrary reasons), let's create a private variable that tracks the linear value:
+
+```c++
+T _offset_linear;
+```
+
+In our `processOne` we need to use this value
+
+```c++
+    [[nodiscard]] constexpr V processOne(V input) const noexcept { return input*input + _offset_linear; }
+```
+
+And update it whenever the `"Property Map"` is updated with a new value for this property
+
+```c++
+    void settingsChanged(const gr::property_map& old_settings, const gr::property_map& new_settings) {
+        if (new_settings.contains("offset") && old_settings.at("offset") != new_settings.at("offset")) {
+            _offset_linear = pow(T{20},offset/T{10});
+        }
+    }
+```
