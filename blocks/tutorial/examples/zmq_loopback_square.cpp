@@ -35,6 +35,7 @@ int main() {
     });
 
     auto& squareBlock = fg.emplaceBlock<Square<T>>({
+        {"offset", "3.0"},
     });
 
 
