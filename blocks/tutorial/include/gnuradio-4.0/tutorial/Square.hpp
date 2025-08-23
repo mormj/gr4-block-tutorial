@@ -6,16 +6,17 @@
 
 namespace gr::tutorial {
 
-struct Square : Block<Square> {
+template <typename T>
+struct Square : Block<Square<T>> {
 
     using Description = Doc<"@brief Squares the input value">;
 
-    PortIn<float> in;
-    PortOut<float> out;
+    PortIn<T> in;
+    PortOut<T> out;
 
     GR_MAKE_REFLECTABLE(Square, in, out);
 
-    [[nodiscard]] constexpr float processOne(float input) const noexcept { return input*input; }
+    [[nodiscard]] constexpr T processOne(T input) const noexcept { return input*input; }
 };
 
 } // namespace gr::tutorial
