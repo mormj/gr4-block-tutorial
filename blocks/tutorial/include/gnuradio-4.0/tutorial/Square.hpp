@@ -14,10 +14,22 @@ struct Square : Block<Square<T>> {
     PortIn<T> in;
     PortOut<T> out;
 
-    GR_MAKE_REFLECTABLE(Square, in, out);
+    Annotated<T, "offset", Doc<"additive offset">, Visible, Unit<"dB">>        offset = 0;
+
+    T _offset_linear;
+
+    GR_MAKE_REFLECTABLE(Square, in, out, offset);
 
     template<gr::meta::t_or_simd<T> V>
-    [[nodiscard]] constexpr V processOne(V input) const noexcept { return input*input; }
+    [[nodiscard]] constexpr V processOne(V input) const noexcept { return input*input + _offset_linear; }
+
+    void settingsChanged(const gr::property_map& old_settings, const gr::property_map& new_settings) {
+        if (new_settings.contains("offset") && old_settings.at("offset") != new_settings.at("offset")) {
+            _offset_linear = pow(T{10},offset/T{10});
+        }
+    }
+
+
 };
 
 } // namespace gr::tutorial
