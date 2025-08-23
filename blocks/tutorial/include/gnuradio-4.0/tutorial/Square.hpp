@@ -16,7 +16,8 @@ struct Square : Block<Square<T>> {
 
     GR_MAKE_REFLECTABLE(Square, in, out);
 
-    [[nodiscard]] constexpr T processOne(T input) const noexcept { return input*input; }
+    template<gr::meta::t_or_simd<T> V>
+    [[nodiscard]] constexpr V processOne(V input) const noexcept { return input*input; }
 };
 
 } // namespace gr::tutorial
