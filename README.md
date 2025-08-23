@@ -1,9 +1,8 @@
 # gr4-block-tutorial
 
-This repo is designed to show how to create simple blocks in GR4
+This repo is designed to show how to create simple blocks in GR4.  Another good reference is also this tutorial given by Alex Krimm at [EU GR Days 2024](https://www.youtube.com/live/ce496ZCwlqA?si=u0hhU2i_57sJbWty&t=1121) 
 
 ## Setup and build
-
 
 
 ```
@@ -243,5 +242,17 @@ becomes
 
 `T` should already be defined as float, so recompile and run, and the block should work as before.  Modify it with a different type like `short` and modify the GR3 flowgraph appropriately to reflect this
 
+### SIMD
+To use (what will become) std::simd approach to vectorizing the block, we just have to add a template type above the processOne function, and use this new template type `V`
+
+```c++
+    template<gr::meta::t_or_simd<T> V>
+    [[nodiscard]] constexpr V processOne(V input) const noexcept { return input*input; }
+```
 
 
+## Lesson 3: Parameter Management
+
+### Adding a parameter
+
+### Annotations
