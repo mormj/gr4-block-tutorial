@@ -34,7 +34,7 @@ int main() {
         {"bind", true},
     });
 
-    auto& squareBlock = fg.emplaceBlock<Square>({
+    auto& squareBlock = fg.emplaceBlock<Square<T>>({
     });
 
 
