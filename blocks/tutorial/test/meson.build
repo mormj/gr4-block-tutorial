@@ -1,5 +1,6 @@
 tests = [
-  ['qa_Copy', ['qa_Copy.cpp'], [gr4_tutorial_blocks_dep]]
+  ['qa_Copy', ['qa_Copy.cpp'], [gr4_tutorial_blocks_dep]],
+  ['qa_Square', ['qa_Square.cpp'], [gr4_tutorial_blocks_dep]]
 ]
 
 common_deps = [gr4_dep, ut_dep]
