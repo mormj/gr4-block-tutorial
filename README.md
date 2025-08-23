@@ -310,4 +310,36 @@ And update it whenever the `"Property Map"` is updated with a new value for this
     }
 ```
 
-## Lesson 4
+## Lesson 4: Unit Tests
+
+We should have done this earlier.  But now that we have a functional block, let's add some tests to make sure it stays that way.
+
+In the `test/` folder, create `qa_Square.cpp`
+
+```cpp
+#include <boost/ut.hpp>
+
+#include <gnuradio-4.0/tutorial/Square.hpp>
+using namespace gr::tutorial;
+using namespace boost::ut;
+
+const suite SquareTests = [] {
+    "Simple Test"_test = [] {
+        auto blk = Square<float>(gr::property_map{
+            {"offset", "3.0"},
+        });
+
+        float value = 483732.9227;
+        float expected = value * value + pow(10.0,3.0/10.0);
+        expect(eq(blk.processOne(value), expected)); 
+    };
+
+};
+
+int main() { return boost::ut::cfg<boost::ut::override>.run(); }
+```
+
+then add the qa_Square into the `meson.build` file
+
+Testing the `processOne` method directly is the easiest way to add qa for a block.  But we can also instantiate a flowgraph to verify functionality.  This adds to compile time, and is usually not necessary.
+
