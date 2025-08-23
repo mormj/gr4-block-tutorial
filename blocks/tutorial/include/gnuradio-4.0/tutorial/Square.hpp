@@ -11,12 +11,12 @@ struct Square : Block<Square<T>> {
 
     using Description = Doc<"@brief Squares the input value">;
 
-    PortIn<T> in;
-    PortOut<T> out;
+    PortIn<T> in{};
+    PortOut<T> out{};
 
     Annotated<T, "offset", Doc<"additive offset">, Visible, Unit<"dB">>        offset = 0;
 
-    T _offset_linear;
+    T _offset_linear{T{0}};
 
     GR_MAKE_REFLECTABLE(Square, in, out, offset);
 
