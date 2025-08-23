@@ -208,3 +208,40 @@ Compile this with `ninja`, then run `zmq_loopback_square` from the command line.
 
 For many blocks, it is necessary to allow it to work over a variety of types.  C++ uses templates to achieve this purpose, so we will update the `Square` block to achieve this purpose
 
+Go back to the Square.hpp - let's template the parameter, so it will square floats, or ints, or whatever type could be defined
+
+
+Add the template parameter to the class definition:
+```c++
+template <typename T>
+struct Square : Block<Square<T>> {
+```
+
+Now, use the template type `T` instead of `float` in the ports and the processOne method
+
+```c++
+    PortIn<T> in;
+    PortOut<T> out;
+
+    GR_MAKE_REFLECTABLE(Square, in, out);
+
+    [[nodiscard]] constexpr T processOne(T input) const noexcept { return input*input; }
+```
+
+
+Now, when we try and compile, this will fail because our block instantiation in the flowgraph doesn't use the template parameter.
+
+```c++
+    auto& squareBlock = fg.emplaceBlock<Square>({
+    });
+```
+becomes
+```c++
+    auto& squareBlock = fg.emplaceBlock<Square<T>>({
+    });
+```
+
+`T` should already be defined as float, so recompile and run, and the block should work as before.  Modify it with a different type like `short` and modify the GR3 flowgraph appropriately to reflect this
+
+
+
