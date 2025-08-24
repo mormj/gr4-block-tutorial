@@ -14,6 +14,11 @@ exe = executable('zmq_loopback_square', 'zmq_loopback_square.cpp',
   include_directories: inc_dirs,
   dependencies: [gr4_dep, gr4_blocklib_dep, pmt_conv_dep, zmq_dep, gr4_zeromq_headers])
 
+exe = executable('zmq_loopback_packetizer', 'zmq_loopback_packetizer.cpp',
+  install : true,
+  include_directories: inc_dirs,
+  dependencies: [gr4_dep, gr4_blocklib_dep, pmt_conv_dep, zmq_dep, gr4_zeromq_headers])
+
 
 #exe2 = executable('gr4-dynamic-flowgraph', 'gr4-dynamic-example.cpp',
 #  install : true,
