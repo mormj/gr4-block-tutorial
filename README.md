@@ -343,3 +343,151 @@ then add the qa_Square into the `meson.build` file
 
 Testing the `processOne` method directly is the easiest way to add qa for a block.  But we can also instantiate a flowgraph to verify functionality.  This adds to compile time, and is usually not necessary.
 
+
+## Lesson 5: processBulk
+
+Not every block is so simple that we can use a `processOne` function.  `processBulk` is much more similar to the traditional GR3 `work` method.
+
+
+There are several ways to write a processBulk function, but we will start with the simplest:
+
+```c++
+    [[nodiscard]] constexpr work::Status processBulk(std::span<const T> input, std::span<T> output) const noexcept {       
+        std::ranges::transform(input, output.begin(), [&](T a){ return a*a + _offset_linear; });
+
+        return work::Status::OK;
+    }
+```
+
+This does the exact same thing as the `processOne` but is wrapped in std::transform.  It's unnecessary, but shows how the processBulk works.  
+
+We can comment out the `processOne` use this `processBulk`, and update the qa test accordingly (or comment it out)
+
+But when we run the ZMQ flowgraph, we see the same result.
+
+
+Let's move onto a more interesting usage of processBulk.  In this example, we are going to take multiple streams, add them together, then packetize and send as a PMT.
+
+We will create a new block (can just put it in `Square.hpp`), called `Packetizer`.  Let's take a look at the following code
+
+
+```c++
+template <typename T>
+struct Packetizer : Block<Packetizer<T>, Resampling<1024U, 1UZ, false>> {
+```
+
+This block uses a new template property to indicate to the compiler that it will act as a resampler.  The resampling ratio is specified at compile time, but as we will see can be changed during runtime.  Other than that the class definition is the same as the `Square` block
+
+```c++
+    using Description = Doc<"@brief Packetize the input streams and perform some function">;
+
+    std::vector<PortIn<T>> in;
+    PortOut<pmtv::pmt> out;
+
+    size_t n_inputs;
+    size_t packet_size;
+
+    GR_MAKE_REFLECTABLE(Packetizer, in, out, n_inputs, packet_size);
+```
+
+Here we are going to specify a single output port, but multiple input ports.  This will also change how we define the `processBulk` method as we will see.  We add 2 parameters:
+
+1) Number of inputs, as we want to change this at runtime/instantiation
+2) `packet_size` - how many samples are going to be sent in the bursts
+
+```c++
+    void settingsChanged(const property_map& old_settings, const property_map& new_settings) noexcept {
+        if (new_settings.contains("n_inputs") && old_settings.at("n_inputs") != new_settings.at("n_inputs")) {
+            in.resize(n_inputs);
+        }
+
+        if (new_settings.contains("packet_size")) {
+            this->input_chunk_size = packet_size;
+        }
+    }
+```
+Our parameter management allows us to dynamically change the number of input ports, and the decimation ratio - which is a member variable of the base `Block` class available when `Resampling` is specified.  This value `input_chunk_size` specifies for each output sample, how many input samples will be consumed - aka the decimation factor.
+
+```c++
+    template<gr::InputSpanLike TInSpan>
+    [[nodiscard]] constexpr work::Status processBulk(const std::span<TInSpan>& input, std::span<pmtv::pmt> output) const noexcept {       
+
+        const size_t N = this->input_chunk_size;  // input_chunk_size defines the input to output ratio, i.e. the decimation ratio
+        size_t num_chunks = output.size();
+
+        for (size_t idx = 0; idx < num_chunks; ++idx) {
+            std::vector<T> out_chunk(N);
+            std::copy(input[0].begin()+ idx * N, input[0].begin()+ (idx+1) * N, out_chunk.begin());
+            for (std::size_t n = 1; n < input.size(); n++) {
+                std::transform(out_chunk.begin(), out_chunk.end(), input[n].begin()+ idx * N, out_chunk.begin(), 
+                    [](T a, T b){
+                        return a + b;
+                    }
+                );
+            }
+            
+            output[idx] = pmtv::pmt(std::move(out_chunk));
+        }
+        return work::Status::OK;
+    }
+
+};
+```
+
+The `processBulk` method assumes something important which is contracturally guaranteed in the scheduler with a `Resampling` block.  Namely, that the number of available samples to write to the output will be equal to the number of input samples available / `input_chunk_size`.  Remember that `processBulk` is more limited in functionality than a GR3 `general_work` method and is more like the `work` of a sync block.
+
+So all we are doing in this process bulk is accumulating across the inputs in chunks of `input_chunk_size` then copying to a PMT (using the new PMT API).
+
+We can test this with a flowgraph - create `zmq_loopback_packetizer.cpp` by copying one of the other ones.
+
+In this, add 3 ZmqPullSource blocks with different ports and the packetizer block
+
+```c++
+    gr::Graph fg;
+    auto&     source1 = fg.emplaceBlock<gr::zeromq::ZmqPullSource<T>>({
+        {"endpoint", "tcp://localhost:5555"},
+        {"timeout", 10},
+        {"bind", false},
+    });
+
+    auto&     source2 = fg.emplaceBlock<gr::zeromq::ZmqPullSource<T>>({
+        {"endpoint", "tcp://localhost:5556"},
+        {"timeout", 10},
+        {"bind", false},
+    });
+
+    auto&     source3 = fg.emplaceBlock<gr::zeromq::ZmqPullSource<T>>({
+        {"endpoint", "tcp://localhost:5557"},
+        {"timeout", 10},
+        {"bind", false},
+    });
+
+    auto& sink = fg.emplaceBlock<gr::zeromq::ZmqPushSink<pmtv::pmt>>({
+        {"endpoint", "tcp://localhost:5558"},
+        {"timeout", 100},
+        {"bind", true},
+    });
+
+    auto& packetizerBlock = fg.emplaceBlock<Packetizer<T>>({
+        {"n_inputs", 3},
+        {"packet_size", 1024}
+    });
+```
+
+When connecting up the inputs to the packetizer, we need to do things a little differently than before.  There is a special syntax for blocks with multiple input ports, and we can no longer use the `.to<"out">` type of syntax.
+
+```c++
+    if (fg.connect(source1, "out"s, packetizerBlock, "in#0"s) != gr::ConnectionResult::SUCCESS) {
+        throw gr::exception(connection_error);
+    }
+    if (fg.connect(source2, "out"s, packetizerBlock, "in#1"s) != gr::ConnectionResult::SUCCESS) {
+        throw gr::exception(connection_error);
+    }
+    if (fg.connect(source3, "out"s, packetizerBlock, "in#2"s) != gr::ConnectionResult::SUCCESS) {
+        throw gr::exception(connection_error);
+    }    
+```
+
+Adjust the rest of the flowgraph as necessary, and use `zmq_packet_signal_3.grc` to test it
+
+
