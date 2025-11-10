@@ -1,6 +1,6 @@
 {
   "name": "GR4 Block Tutorial Dev Container",
-  "image": "ghcr.io/mormj/gr4-oot-env:latest",
+  "image": "ghcr.io/mormj/gr4-oot-env-incubator:latest",
   "runArgs": [
     "--network=host"
   ],
