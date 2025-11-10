@@ -8,7 +8,7 @@ This repo is designed to show how to create simple blocks in GR4
 
 ```
 cd gr4-block-tutorial
-docker run -it -v `pwd`:/code ghcr.io/mormj/gr4-oot-env:latest bash # this defaults to the /code directory
+docker run -it -v `pwd`:/code ghcr.io/mormj/gr4-oot-env-incubator:latest bash # this defaults to the /code directory
 meson setup build
 cd build
 ninja
@@ -24,7 +24,7 @@ Mainly, because it's easier to work with than CMake and doesn't need to match wh
 
 
 ## GR3 Flowgraphs
-For testing we will be pushing samples and packets to and from GNU Radio 3.x using ZMQ push and pull blocks.  The supporting flowgraphs are contained in the gr3_grc folder.  The `gr4-oot-env` container contains some basic ZMQ blocks and a PMT converter for GR4 from `github.com/gnuradio/gr4-incubator` which is the proving ground for future official blocks
+For testing we will be pushing samples and packets to and from GNU Radio 3.x using ZMQ push and pull blocks.  The supporting flowgraphs are contained in the gr3_grc folder.  The `gr4-oot-env-incubator` container contains some basic ZMQ blocks and a PMT converter for GR4 from `github.com/gnuradio/gr4-incubator` which is the proving ground for future official blocks
 
 ### ZMQ Streaming
 
